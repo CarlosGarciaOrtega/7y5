@@ -1,0 +1,41 @@
+#tablero{
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    width: 1000px;
+    height: 500px;
+}
+
+#tablero div{
+    border: 1px solid gray;
+    width: 200px;
+    height: 100%;
+    font-size: 4rem;
+    text-align: center;
+    display: flex;
+
+    box-sizing: border-box;
+}
+
+
+input{
+    width: 110px;
+    height: 40px;
+    padding: 5px;
+    margin: 5px;
+    font-size: 1.5rem;
+}
+
+
+#info{
+    font-size: 3rem;
+}
+
+#direccion{
+    display: inline-block;
+    font-size: 1.5rem;
+}
+
+h6{
+    font-size: 2rem;
+    margin: 0;
+}
