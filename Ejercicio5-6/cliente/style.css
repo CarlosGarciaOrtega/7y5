@@ -10,8 +10,6 @@
     width: 200px;
     height: 100%;
     font-size: 4rem;
-    text-align: center;
-    display: flex;
 
     box-sizing: border-box;
 }
@@ -38,4 +36,5 @@ input{
 h6{
     font-size: 2rem;
     margin: 0;
+    text-align: center;
 }

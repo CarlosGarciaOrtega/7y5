@@ -14,7 +14,7 @@ class Server {
         this.operaciones = {
             list: [
                 {
-                    type: "COGER",
+                    type: "PEDIR",
                     accion: (content, ws) => this.coger(content, ws)
                 },
                 {
@@ -39,9 +39,10 @@ class Server {
                 this.send("COMIENZO", false, ws);
                 this.send("CASILLA", player, ws);
                 this.send("INFO", "Esperando jugadores", ws);
-                if (this.clientes.size == 3) {
+                if (this.clientes.size == 1) {
                     this.server.clients.forEach((client) => {
                         this.send("INFO", "Comienza la partida", client);
+                        this.send("COMIENZO", true, ws);
 
                     });
 
@@ -51,7 +52,7 @@ class Server {
 
             ws.on("message", (data) => {
                 console.log(JSON.parse(data));  
-                //this.do(data, ws);
+                this.do(data, ws);
                 //this.send("PLAYERS", ws);
             });
 
@@ -99,7 +100,9 @@ class Server {
     }
 
     coger(content, ws) {
-        this.juego.coger(content, ws);
+        console.log("Pedir");
+        let carta  = this.juego.coger(ws);
+        this.send("CARTA",carta ,ws);
 
     }
 

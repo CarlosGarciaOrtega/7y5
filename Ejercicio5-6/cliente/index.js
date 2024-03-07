@@ -25,6 +25,10 @@ let operaciones = {
         {
             type:"INFO",
             accion: dibujaInfo
+        },
+        {
+            type:"CARTA",
+            accion: dibujaCarta
         }
     ]
 }
@@ -63,7 +67,13 @@ function dibujaInfo(informacion){
     document.getElementById("info").innerText="";
     document.getElementById("info").innerText=informacion;
 }
-
+function dibujaCarta(content){
+    console.log("carta",content);
+    let {jugador,carta} = content;
+    let contenedorCarta = document.createElement("h6");
+    contenedorCarta.innerText=carta.numero+" de "+carta.palo;
+    document.getElementById("div-"+jugador.turno).appendChild(contenedorCarta);
+}
 
 document.getElementById("pedir").addEventListener("click",()=>{
     if(comienzo){

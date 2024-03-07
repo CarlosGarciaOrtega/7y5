@@ -1,3 +1,6 @@
+const VICTORIA = 0;
+const DERROTA = 1;
+const SEGUIR = 2;
 class Jugador {
     constructor(nombre , turno) {
         this.nombre = nombre;
@@ -20,6 +23,11 @@ class Jugador {
     }
     getPuntos() {
         return this.puntos;
+    }
+    comprobarPuntos() {
+        if(this.puntos>7.5) return DERROTA;
+        else if(this.puntos==7.5) return VICTORIA;
+        else return SEGUIR;
     }
 }
 export { Jugador };
