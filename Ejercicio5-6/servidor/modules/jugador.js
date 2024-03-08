@@ -29,5 +29,11 @@ class Jugador {
         else if(this.puntos==7.5) return VICTORIA;
         else return SEGUIR;
     }
+    mostarCartas() {
+        return this.cartas;
+    }
+    getBanca() {
+        return this;
+    }
 }
 export { Jugador };

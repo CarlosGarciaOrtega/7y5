@@ -2,8 +2,10 @@ import { WebSocketServer } from 'ws';
 import { Partida } from "./partida.js";
 
 
-const NOTIFY = 0;
-const PARTIDA_ID = 1;
+const VICTORIA = 0;
+const DERROTA = 1;
+const SEGUIR = 2;
+const BANCA = 4;
 
 class Server {
     constructor() {
@@ -26,8 +28,8 @@ class Server {
 
 
 
-        this.server.on("connection", (ws) => {
-            if (this.clientes.size >= 3) {
+        this.server.on("connection", async (ws) => {
+            if (this.clientes.size >= 5) {
                 this.send("INFO", "Limite de jugadores alcanzado", ws);
                 ws.close();
 
@@ -35,25 +37,28 @@ class Server {
             } else {
                 this.clientes.add(ws);
                 console.log("Nuevo cliente conectado", this.clientes.size);
-                let player = this.juego.nuevoJugador(ws, this.clientes.size);
+                let player = await this.juego.nuevoJugador(ws, this.clientes.size);
+
                 this.send("COMIENZO", false, ws);
-                this.send("CASILLA", player, ws);
+                this.send("CASILLA", player,ws);
                 this.send("INFO", "Esperando jugadores", ws);
-                if (this.clientes.size == 1) {
+                if (this.clientes.size == 3) {
                     this.server.clients.forEach((client) => {
                         this.send("INFO", "Comienza la partida", client);
-                        this.send("COMIENZO", true, ws);
-
+                        this.send("INFO_TURNO", this.juego.turnoActual(), client);
+                        player = this.juego.jugadores.get(client);
+                        this.send("CASILLA", player);
+                        if (this.juego.turnoActual() == this.juego.jugadores.get(client).turno) {
+                            this.send("COMIENZO", true, client);
+                        }
                     });
-
                 }
-
             }
 
             ws.on("message", (data) => {
-                console.log(JSON.parse(data));  
+                console.log(JSON.parse(data));
                 this.do(data, ws);
-                //this.send("PLAYERS", ws);
+                //this.send("CARTAS", " ");
             });
 
 
@@ -74,16 +79,22 @@ class Server {
             conexion.send(JSON.stringify(mensaje));
         }
         else {
-            //Si la conexion es indefinida e4s  un mensaje a todos los clientes
-            let jugadores = [...this.board.jugadores.values()].map((item) => {
-                return item;
-            });
-
-
+            console.log("A todos los clientes conectados");
+            console.log(tipo, contenido);
             this.server.clients.forEach((client) => {
-                this.send("PLAYERS", jugadores, client);
-
+                client.send(JSON.stringify(mensaje));
             });
+            //Si la conexion es indefinida e4s  un mensaje a todos los clientes
+            /*
+                        // Enviar la lista de jugadores a todos los clientes conectados
+                        let jugadores = [...this.board.jugadores.values()].map((item) => {
+                            return item;
+                        });
+
+                        this.server.clients.forEach((client) => {
+                            this.send("PLAYERS", jugadores, client);
+                        });
+            */
         }
     }
 
@@ -100,46 +111,59 @@ class Server {
     }
 
     coger(content, ws) {
+        if (this.juego.turnoActual() != this.juego.jugadores.get(ws).turno) return;
+
         console.log("Pedir");
-        let carta  = this.juego.coger(ws);
-        this.send("CARTA",carta ,ws);
+        let mensaje = this.juego.coger(ws);
+        console.log(mensaje);
+        if (mensaje.estado == DERROTA) {
+            this.send("INFO", "Has perdido", ws);
+            this.send("COMIENZO", false, ws);
+        } else if (mensaje.estado == VICTORIA) {
+            this.send("INFO", "Has ganado", ws);
+            this.send("COMIENZO", false, ws);
+        }
+
+        this.send("CARTA", mensaje.info);
+
+        if (mensaje.estado == DERROTA || mensaje.estado == VICTORIA) {
+            this.cambioTurno(ws);
+            
+        }
 
     }
-
-
-    moverse(content, ws) {
-        let jugadorid = this.board.moverse(ws);
-        this.send("CASILLA", this.board.getPlayer(ws), ws);
-        console.log(jugadorid);
-
-
-    }
-
-    rotar(content, ws) {
-        this.board.rotar(content, ws);
-
-    }
-
-    disparar(content, ws) {
-
-        let jugadorEliminado = this.board.disparar(ws);
-        if (jugadorEliminado != null) {
-            this.send("COMIENZO", false, jugadorEliminado.conexion);
-            this.send("INFO", "Has muerto", jugadorEliminado.conexion);
-            this.send("INFO", "Has matado a " + jugadorEliminado.nombre, ws);
-
-            if (this.board.players.size == 1) {
-                this.send("COMIENZO", false, ws);
-                this.send("INFO", "Has ganado", ws);
-                //Aqui como la partida ha acabado podemos borrar de la base de datos los jugadores
-                this.delete();
-            }
-        } else {
-            this.send("INFO", "Has fallado", ws);
+    cambioTurno(ws) {
+        let banca = this.juego.turnoSiguiente(ws);
+        if (banca == BANCA) {
+            let cartas = this.juego.turnoBanca();
+            let banca = this.juego.banca;
+            console.log("banca", banca);    
+            this.send("CASILLA",banca );
+            this.send("BANCA", cartas);
+            let ganador = this.juego.ganador();
+            this.send("INFO", "Fin de la partida.Ha ganado"+ganador.getNombre());	
         }
 
 
+        [...this.juego.jugadores.keys()].find((conexion) => {
+            if (this.juego.turnoActual() == this.juego.jugadores.get(conexion).turno) {
+                this.send("COMIENZO", true, conexion);
+                this.send("INFO_TURNO", this.juego.turnoActual(), conexion);
+            }
+
+        });
     }
+
+
+    plantarse(content, ws) {
+        
+        this.send("INFO", "Te has plantado", ws);
+        this.send("COMIENZO", false, ws);
+        this.cambioTurno(ws);
+    }
+
+
+   
 }
 
 export { Server }
