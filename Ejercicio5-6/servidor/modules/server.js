@@ -42,6 +42,7 @@ class Server {
                 this.send("COMIENZO", false, ws);
                 this.send("CASILLA", player,ws);
                 this.send("INFO", "Esperando jugadores", ws);
+                let jugadorInicial;
                 if (this.clientes.size == 3) {
                     this.server.clients.forEach((client) => {
                         this.send("INFO", "Comienza la partida", client);
@@ -50,8 +51,11 @@ class Server {
                         this.send("CASILLA", player);
                         if (this.juego.turnoActual() == this.juego.jugadores.get(client).turno) {
                             this.send("COMIENZO", true, client);
+                            jugadorInicial = this.juego.jugadores.get(client);
+                            
                         }
                     });
+                    this.send("INFO_TURNO", "Turno de " + jugadorInicial.nombre);
                 }
             }
 
@@ -148,7 +152,7 @@ class Server {
         [...this.juego.jugadores.keys()].find((conexion) => {
             if (this.juego.turnoActual() == this.juego.jugadores.get(conexion).turno) {
                 this.send("COMIENZO", true, conexion);
-                this.send("INFO_TURNO", this.juego.turnoActual(), conexion);
+                this.send("INFO_TURNO", "Turno de " + this.juego.jugadores.get(conexion).nombre);
             }
 
         });
@@ -164,6 +168,6 @@ class Server {
 
 
    
-}
+    }
 
 export { Server }
